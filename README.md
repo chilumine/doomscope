@@ -1,4 +1,4 @@
-# DoomScope
+<img width="1536" height="1024" alt="e7454660-a0e6-48e8-827a-ff47943d0606" src="https://github.com/user-attachments/assets/20fe704d-f118-446d-97ce-f8f72bfbee9d" />
 
 ## Overview
 
@@ -205,4 +205,5 @@ Regular expressions, patterns, and detection rules are stored in separate files,
 
 DoomScope is intended for authorized security testing and educational purposes only.  
 Unauthorized use against systems you do not own or have permission to test is strictly prohibited.
+
 
