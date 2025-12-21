@@ -1,0 +1,62 @@
+# ============================================================
+# DOOMSCOPE - Complete Requirements File
+# ============================================================
+# Python 3.8+ required
+
+# Core Web Framework & HTTP
+Flask>=2.0
+requests>=2.25
+urllib3>=1.26
+
+# HTML Parsing & DOM Manipulation
+beautifulsoup4>=4.9
+lxml>=4.6
+
+# Browser Automation & JavaScript Execution
+selenium>=4.0
+# Note: Requires ChromeDriver compatible with your Chrome/Chromium version
+
+# Advanced HTTP Tools
+httpx>=0.24.0
+
+# Subdomain & DNS Enumeration
+Sublist3r
+waybackpy>=3.2
+dnspython>=2.0
+tldextract>=3.0
+
+# Parameter & Hidden Fields Discovery
+arjun
+
+# Technology Detection & Web Application Fingerprinting
+python-Wappalyzer>=6.0
+
+# Terminal & Console Output Styling
+colorama>=0.4
+
+# Database Support (Optional - only if using PostgreSQL)
+psycopg>=3.0
+
+# ============================================================
+# EXTERNAL TOOLS (Install separately)
+# ============================================================
+# These are NOT Python packages but are required for full functionality:
+#
+# 1. nuclei - Web vulnerability scanner
+#    Install: go install github.com/projectdiscovery/nuclei/v2/cmd/nuclei@latest
+#
+# 2. httpx v2 - HTTP probe tool
+#    Install: go install github.com/projectdiscovery/httpx/v2/cmd/httpx@latest
+#
+# 3. dirsearch - Directory brute-forcing tool
+#    Install: git clone https://github.com/maurosoria/dirsearch.git
+#             OR: pip install dirsearch
+#
+# 4. wapiti - Web vulnerability scanner
+#    Install: pip install wapiti3
+#
+# 5. ChromeDriver - Chrome automation driver (for Selenium)
+#    Download: https://chromedriver.chromium.org/
+#    Must match your Chrome/Chromium version
+#
+# ============================================================

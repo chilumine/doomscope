@@ -1,0 +1,11 @@
+{
+  "url": "http://testasp.vulnweb.com/Search.asp",
+  "parameter": "tfSearch",
+  "total_findings": 1,
+  "results": [
+    {
+      "vulnerability": "xss",
+      "finding": "Reflected Cross Site Scripting in http://testasp.vulnweb.com/Search.asp via injection in the parameter tfSearch"
+    }
+  ]
+}

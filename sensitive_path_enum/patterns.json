@@ -1,0 +1,688 @@
+[
+  {
+    "name": "Internal File Path Exposure (Strict)",
+    "regex": "((\\/var\\/www\\/|\\/home\\/[A-Za-z0-9]+\\/|C:\\[A-Za-z0-9 _.-\\]{5,})\\s*(?:php|conf|ini|log|cache))",
+    "severity": "Medium",
+    "description": "Detects exposure of internal file system paths (Linux/Windows path prefix + min length + file type keyword). This is the strict rule (3+ conditions).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Internal File Path Exposure (Generic)",
+    "regex": "(\\/var\\/www\\/|\\/home\\/[A-Za-z0-9]+\\/|C:\\\\|\\/etc\\/|\\/usr\\/local\\/)[A-Za-z0-9 _\\/\\.-]{5,}(?:\\.php|\\.ini|\\.conf|\\.log|\\.cache|\\.sql|\\.bak|\\.env|\\.yml)",
+    "severity": "Medium",
+    "description": "Detects exposure of internal file system paths (Generic Linux/Windows path prefix + any path content + file extension). This is the flexible rule.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Stacktrace Leak (Generic)",
+    "regex": "(Exception in thread|Traceback \\(most recent call last\\)|Caused by:|at .* in .*:\\d+)",
+    "severity": "Medium",
+    "description": "Matches common stack trace patterns revealing file/line info.",
+    "accuracy": "High"
+  },
+  {
+    "name": "ENV Secrets (Generic)",
+    "regex": "(secret|token|password|api[_-]?key|client_secret)\\s*[:=]\\s*['\\\"]?([^\\s\\r\\n'\\\"]{12,}[A-Za-z][0-9][!@#\\$])['\\\"]?",
+    "severity": "High",
+    "description": "Detects common environment variables containing secrets (min 12 chars, must contain letter, digit, and special char). HIGHLY STRICT.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Laravel APP_KEY",
+    "regex": "APP_KEY\\s*=\\s*base64:([A-Za-z0-9+/=]{44})",
+    "severity": "High",
+    "description": "Detects Laravel application encryption key (exactly 44 base64 chars, fixed structure).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "DB Connection String",
+    "regex": "(mysql|postgres|mongodb):\\/\\/([A-Za-z0-9_\\-]+):([A-Za-z0-9!@#\\$]{8,})@([a-z0-9\\-._]{3,}\\.(com|net|org|[0-9]{1,3}))\\s*\\/",
+    "severity": "High",
+    "description": "Matches DB connection strings with required protocol, 8+ char password with special chars, and a structured host name/IP.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Framework Default ENV Keys",
+    "regex": "(APP_DEBUG|DB_HOST|DB_USERNAME|DB_PASSWORD|MAIL_HOST|MAIL_USERNAME|MAIL_PASSWORD)\\s*=\\s*['\\\"]?([^'\\\"]+)['\\\"]?",
+    "severity": "High",
+    "description": "Detects default framework environment keys that often contain sensitive info with a non-empty value.",
+    "accuracy": "High"
+  },
+  {
+    "name": "JWT Token",
+    "regex": "eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}",
+    "severity": "High",
+    "description": "Matches JSON Web Tokens (JWT) used for authentication (3 parts, each >= 10 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "AWS Access Key ID + Secret",
+    "regex": "AKIA[0-9A-Z]{16}.*?(Secret|Key).*?([A-Za-z0-9/+=]{40})",
+    "severity": "Critical",
+    "description": "Matches AWS Key ID (AKIA+16) near the Secret Access Key (40 chars) and the word 'Secret' or 'Key'. HIGHLY STRICT.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Google API Key",
+    "regex": "AIza[0-9A-Za-z\\-_]{35}",
+    "severity": "High",
+    "description": "Matches Google API keys (AIza + 35 chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Stripe Secret Key",
+    "regex": "sk_live_[0-9a-zA-Z]{24,}",
+    "severity": "Critical",
+    "description": "Detects Stripe live secret keys (fixed prefix + >= 24 chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Bearer Token (Specific)",
+    "regex": "(authorization|x-api-key)[\\s:=]+(bearer|token)[\\s:]+([A-Za-z0-9\\-._~+/]{40,})",
+    "severity": "High",
+    "description": "Matches bearer tokens in HTTP headers or scripts (keywords + prefix + value >= 40 chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Generic API Key (Specific)",
+    "regex": "(?:api|token|secret)[_\\-]?key[=\\s:]+['\\\"]?([A-Za-z0-9\\-_]{32,})['\\\"]?",
+    "severity": "High",
+    "description": "Detects generic API keys in code or configuration (key name + value >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Private Key (PEM)",
+    "regex": "-----BEGIN (RSA|DSA|EC|OPENSSH|PRIVATE) KEY-----",
+    "severity": "Critical",
+    "description": "Matches private keys in PEM format (fixed structure).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Email Address",
+    "regex": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]{2,}",
+    "severity": "Medium",
+    "description": "Matches generic email addresses.",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Email in ENV",
+    "regex": "(EMAIL|MAIL_USERNAME|MAIL_USER)\\s*[:=]\\s*['\\\"]?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]{2,})['\\\"]?",
+    "severity": "High",
+    "description": "Detects email addresses defined in environment/config files.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Email + Password Same Line (HIGHLY STRICT)",
+    "regex": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[A-Za-z]{2,}(?:[^\\r\\n]{0,80})(pass|pwd|password)[=\\s:]+['\\\"]?([A-Za-z0-9!@#\\$%\\^&*()-=_+]{8,})['\\\"]?",
+    "severity": "Critical",
+    "description": "Detects lines containing email, password keyword, and a strong password (>= 8 chars with special chars) within a close proximity (80 chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Session Tokens",
+    "regex": "(PHPSESSID|csrftoken|sessionid)=([a-zA-Z0-9\\-_]{20,})",
+    "severity": "High",
+    "description": "Matches session tokens or cookies used for authentication (fixed names + value >= 20 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "phpinfo() Exposure",
+    "regex": "(<title>phpinfo\\(\\)<\\/title>|PHP Version \\d+\\.\\d+|Loaded Configuration File|Configuration File \\(php\\.ini\\) Path)",
+    "severity": "High",
+    "description": "Detects phpinfo() output exposing sensitive server information.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Composer Lock Leak",
+    "regex": "(?s)\\\"packages\\\"\\s*:\\s*\\[\\s*\\{\\\"name\":",
+    "severity": "Medium",
+    "description": "Detects presence of composer.lock contents, may reveal dependencies (more strict matching).",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "PHP Errors",
+    "regex": "(Fatal error|Uncaught Exception|Stack trace:|in .* on line \\d+)",
+    "severity": "High",
+    "description": "Detects clear PHP error messages or stack traces revealing file paths.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Laravel Debug Enabled",
+    "regex": "APP_DEBUG\\s*=\\s*(true|1)",
+    "severity": "High",
+    "description": "Detects if Laravel debug mode is explicitly enabled.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Google OAuth Client ID",
+    "regex": "[0-9]{10,}-[a-z0-9]{10,}\\.apps\\.googleusercontent\\.com",
+    "severity": "High",
+    "description": "Matches Google OAuth client IDs.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Facebook App Secret",
+    "regex": "(facebook|fb)_app_secret\\s*[:=]\\s*['\\\"]?([A-Za-z0-9]{32,})['\\\"]?",
+    "severity": "High",
+    "description": "Detects Facebook application secret keys (keywords + value >= 32 chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "PayPal Secret",
+    "regex": "paypal_(client_id|secret)\\s*[:=]\\s*['\\\"]?([A-Za-z0-9]{30,})['\\\"]?",
+    "severity": "High",
+    "description": "Detects PayPal client ID or secret keys (keywords + value >= 30 chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Stripe Publishable Key",
+    "regex": "pk_live_[0-9a-zA-Z]{24,}",
+    "severity": "Medium",
+    "description": "Matches Stripe publishable keys (fixed prefix + >= 24 chars).",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Square Access Token",
+    "regex": "sq0atp-[0-9A-Za-z\\-_]{40,}",
+    "severity": "High",
+    "description": "Matches Square payment access tokens (fixed prefix + >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Docker Credentials",
+    "regex": "(docker)[^\\n]*password\\s*[:=]\\s*['\\\"]?(.{10,})['\\\"]?",
+    "severity": "High",
+    "description": "Detects Docker or registry passwords in config files (keywords + password >= 10 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Git Credentials (Hardcoded in URL)",
+    "regex": "https?:\\/\\/[a-zA-Z0-9._\\-]+:([a-zA-Z0-9._\\-]{8,})@github\\.com",
+    "severity": "Critical",
+    "description": "Matches hardcoded GitHub credentials in URL (protocol + host + 8+ char password). HIGHLY STRICT.",
+    "accuracy": "High"
+  },
+  {
+    "name": "NPM Token",
+    "regex": "_authToken=([A-Za-z0-9]{30,})",
+    "severity": "High",
+    "description": "Detects NPM authentication tokens in config files (fixed name + value >= 30 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Internal IP Address",
+    "regex": "(10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|192\\.168\\.\\d{1,3}\\.\\d{1,3}|172\\.(1[6-9]|2\\d|3[0-1])\\.\\d{1,3}\\.\\d{1,3})",
+    "severity": "Medium",
+    "description": "Matches internal/private IP addresses (10.x, 172.16-31.x, 192.168.x).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Exposed Cronjob",
+    "regex": "\\*\\s*\\*\\s*\\*\\s*\\*\\s*\\*\\s*.+(php|sh|py|node)",
+    "severity": "Medium",
+    "description": "Detects scheduled tasks that may expose scripts (strict timing pattern + script extension).",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Authorization Header Leak",
+    "regex": "Authorization:\\s*Bearer\\s+([A-Za-z0-9\\-._~+/]{40,})",
+    "severity": "High",
+    "description": "Matches Authorization headers with bearer tokens (fixed header + Bearer prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "SSH Known Hosts Leak",
+    "regex": "(ssh-rsa|ecdsa-sha2-nistp256|ssh-ed25519)\\s+([A-Za-z0-9+/=]{40,})",
+    "severity": "Medium",
+    "description": "Matches SSH public keys in known_hosts files (fixed key type + value >= 40 chars).",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Cookie Set-Cookie Header",
+    "regex": "Set-Cookie:\\s*([A-Za-z0-9_-]{5,})=([A-Za-z0-9\\-_]{20,})",
+    "severity": "Medium",
+    "description": "Detects cookie values set in HTTP headers (fixed header + name + value >= 20 chars).",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Cloudflare API Token",
+    "regex": "(cloudflare)[^\\n]*token\\s*['\\\"]?([A-Za-z0-9\\-_]{40,})['\\\"]?",
+    "severity": "High",
+    "description": "Matches Cloudflare API tokens in configs or scripts (keywords + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "DigitalOcean Token",
+    "regex": "dop_v1_([A-Za-z0-9]{40,})",
+    "severity": "High",
+    "description": "Matches DigitalOcean API tokens (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "GitLab Personal Token",
+    "regex": "glpat-([A-Za-z0-9\\-_]{40,})",
+    "severity": "High",
+    "description": "Matches GitLab personal access tokens (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Supabase Service Key",
+    "regex": "sbp_([A-Za-z0-9]{40,})",
+    "severity": "High",
+    "description": "Matches Supabase service keys (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Auth0 Client Secret",
+    "regex": "(auth0)[^\\n]*secret\\s*['\\\"]?([A-Za-z0-9]{32,})['\\\"]?",
+    "severity": "High",
+    "description": "Matches Auth0 client secrets (keywords + value >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "AWS Secret Access Key (Standalone)",
+    "regex": "aws_secret_access_key\\s*[:=]\\s*['\\\"]?([A-Za-z0-9/+=]{40})['\\\"]?",
+    "severity": "Critical",
+    "description": "Matches AWS secret access keys (keyword + exactly 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Azure Storage Key",
+    "regex": "DefaultEndpointsProtocol=[^;]+;AccountName=[^;]+;AccountKey=([A-Za-z0-9+/=]{50,})",
+    "severity": "High",
+    "description": "Matches Azure Storage account keys (3 connection string parts + key >= 50 chars). HIGHLY STRICT.",
+    "accuracy": "High"
+  },
+  {
+    "name": "GCP Service Account Key",
+    "regex": "\"type\":\\s*\"service_account\",\\s*\"project_id\":\\s*\"[^\"]+\",\\s*\"private_key\":\\s*\"-----BEGIN PRIVATE KEY-----\\\\n",
+    "severity": "Critical",
+    "description": "Matches GCP service account private keys in JSON configs (3 required JSON fields + fixed key header). HIGHLY STRICT.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Heroku API Key",
+    "regex": "heroku[_-]?api[_-]?key\\s*[:=]\\s*['\\\"]?([0-9a-fA-F]{40})['\\\"]?",
+    "severity": "High",
+    "description": "Matches Heroku API keys (keywords + exactly 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Terraform Cloud Token",
+    "regex": "tfe-([A-Za-z0-9]{40,})",
+    "severity": "High",
+    "description": "Matches Terraform Cloud API tokens (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Paystack Secret Key",
+    "regex": "sk_live_[0-9a-zA-Z]{40,}",
+    "severity": "High",
+    "description": "Matches Paystack live secret keys (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Razorpay Key",
+    "regex": "rzp_live_[0-9a-zA-Z]{24,}",
+    "severity": "High",
+    "description": "Matches Razorpay live keys (fixed prefix + value >= 24 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Mollie API Key",
+    "regex": "live_[0-9a-zA-Z]{32,}",
+    "severity": "High",
+    "description": "Matches live Mollie API keys (fixed prefix + value >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Twitter API Key",
+    "regex": "AAAAAAAAAAAAAAAAAAAA[A-Za-z0-9%-]{45,}",
+    "severity": "High",
+    "description": "Matches Twitter API keys (fixed prefix + value >= 45 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Twitter Bearer Token",
+    "regex": "AAAAAAAAAAAAAAAAAAAA[A-Za-z0-9%-]{50,}",
+    "severity": "High",
+    "description": "Matches Twitter bearer tokens (fixed prefix + value >= 50 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "LinkedIn Client Secret",
+    "regex": "linkedin[_-]?client[_-]?secret\\s*[:=]\\s*['\\\"]?([A-Za-z0-9]{32,})['\\\"]?",
+    "severity": "High",
+    "description": "Matches LinkedIn client secret keys (keywords + value >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Instagram Access Token",
+    "regex": "IGQVJ[A-Za-z0-9]{40,}",
+    "severity": "High",
+    "description": "Matches Instagram access tokens (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Slack OAuth Token",
+    "regex": "xox[pb]-[0-9]{12}-[0-9]{12}-([a-zA-Z0-9]{40,})",
+    "severity": "High",
+    "description": "Matches Slack OAuth tokens (3 fixed parts + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Android API Key",
+    "regex": "AIza[0-9A-Za-z\\-_]{35}",
+    "severity": "High",
+    "description": "Matches Android Google API keys (fixed prefix + exactly 35 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "iOS API Key (Generic App ID)",
+    "regex": "sk_[0-9a-zA-Z]{40,}",
+    "severity": "High",
+    "description": "Matches a generic pattern often used for mobile API keys (fixed prefix + value >= 40 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Sentry DSN",
+    "regex": "https:\\/\\/[0-9a-fA-F]{10,}@sentry\\.io\\/\\d+",
+    "severity": "High",
+    "description": "Matches Sentry DSN URLs (protocol + key part + host).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Rollbar Access Token",
+    "regex": "access_token=([0-9a-f]{32,})",
+    "severity": "High",
+    "description": "Matches Rollbar access tokens (fixed name + value >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "New Relic License Key",
+    "regex": "NRAK-([0-9a-fA-F]{30,})",
+    "severity": "High",
+    "description": "Matches New Relic license keys (fixed prefix + value >= 30 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "ElasticSearch Auth",
+    "regex": "https?:\\/\\/[a-zA-Z0-9._\\-]+:([^@\\s]+)@.*elastic.*\\.com",
+    "severity": "High",
+    "description": "Matches ElasticSearch authentication URLs with a non-empty password (protocol + host contains 'elastic' + non-empty password).",
+    "accuracy": "High"
+  },
+  {
+    "name": "TLS Certificate",
+    "regex": "-----BEGIN\\s+(CERTIFICATE|RSA PRIVATE KEY|PRIVATE KEY|EC PRIVATE KEY)-----[\\s\\S]*?-----END\\s+(CERTIFICATE|RSA PRIVATE KEY|PRIVATE KEY|EC PRIVATE KEY)-----",
+    "severity": "Medium",
+    "description": "Matches TLS/SSL certificates/keys in PEM format (fixed start + end lines).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Datadog API Key",
+    "regex": "ddapi_([0-9a-zA-Z]{32})",
+    "severity": "High",
+    "description": "Matches Datadog API keys (fixed prefix + exactly 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Honeybadger API Key",
+    "regex": "hbadger_([0-9A-Za-z]{32})",
+    "severity": "High",
+    "description": "Matches Honeybadger monitoring keys (fixed prefix + exactly 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Node Debug Leak",
+    "regex": "(TypeError:|ReferenceError:|UnhandledPromiseRejectionWarning|at (.*:\\d+:\\d+))",
+    "severity": "Medium",
+    "description": "Matches NodeJS error outputs and specific stacktrace file/line format.",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Server Source Code Leak (PHP)",
+    "regex": "<\\?php\\s*(?:(?:(define|require|include|use)\\s*['\"\\w]+)|(?:\\$_(SERVER|SESSION|POST|GET|COOKIE|FILES|REQUEST)\\[)|(?:new\\s+\\w+;))",
+    "severity": "High",
+    "description": "Detects PHP start tag followed by core operations (file/module imports) or superglobal variables, providing strong proof of server-side code exposure. (3+ conditions)",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Server Source Code Leak (NodeJS)",
+    "regex": "(?:require\\s*\\(?['\"\\w]+\\s*\\)|var\\s+\\w+\\s*=\\s*require\\s*\\(?['\"\\w]+\\s*\\))[^;]*;?\\s*(?:\\.listen\\(|\\.createServer\\(|const\\s+fs\\s*=\\s*require\\s*\\(['\"\\\\]fs['\"\\\\]\\))",
+    "severity": "High",
+    "description": "Matches NodeJS module imports immediately followed by high-confidence server operations (like listening on a port, creating a server, or file system access `fs`). (3+ conditions)",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Server Source Code Leak (Python)",
+    "regex": "(?:import\\s+(?:flask|django|requests|os)|from\\s+(?:flask|django|requests|os)\\s+import\\s+)|(?:def\\s+\\w+\\s*\\(.*\\):\\s*[\\s\\S]{0,50}(?:return\\s+render_template|app\\.route|os\\.environ|settings\\.py))",
+    "severity": "High",
+    "description": "Detects imports of common backend/utility libraries (Flask, Django, os, requests) OR function definitions that contain web framework routing or environment variable access. (3+ conditions)",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Java Server Stacktrace Leak",
+    "regex": "(at\\s+[a-zA-Z0-9_.]+\\([^:]+:\\d+\\))",
+    "severity": "Medium",
+    "description": "Java server errors revealing file paths and line numbers (fixed format).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Directory Listing (Apache/Nginx/Generic)",
+    "regex": "(<title>Index of\\s*\\/|\\bParent Directory\\b|Name\\s+Last modified\\s+Size\\s+Description|<address>Apache\\/)",
+    "severity": "Medium",
+    "description": "Detects Apache/Nginx directory listings (common HTML/text signatures) and explicitly looks for the title and Parent Directory links.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Username + Password Pair (HIGHLY STRICT)",
+    "regex": "(?:user(name)?|login|db_user)\\s*[:=]\\s*['\\\"]?([A-Za-z0-9._\\-]{3,})['\\\"]?(?:[^\\r\\n]{0,80})(?:pass(word)?|pwd|db_password)[\\s:=]+['\\\"]?([A-Za-z0-9!@#\\$%\\^&*()-=_+]{8,})['\\\"]?",
+    "severity": "Critical",
+    "description": "Detects leaked username/password pairs in close proximity (username keyword, password keyword, and strong password value >= 8 chars with special chars). HIGHLY STRICT.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Kubernetes Token",
+    "regex": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.([A-Za-z0-9_-]{30,})\\.([A-Za-z0-9_-]{30,})",
+    "severity": "High",
+    "description": "Detects Kubernetes service tokens (fixed header + 2 parts >= 30 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Kubeconfig",
+    "regex": "apiVersion:\\s*v1\\s+clusters:\\s*-\\s*cluster:\\s*",
+    "severity": "High",
+    "description": "Detects kubeconfig exposure (3 fixed YAML fields).",
+    "accuracy": "High"
+  },
+  {
+    "name": "AWS Credential File",
+    "regex": "\\[(default|profile\\s+[A-Za-z0-9_-]+)\\]\\s*aws_access_key_id=",
+    "severity": "Critical",
+    "description": "AWS credentials file signature (fixed profile header + fixed key name).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Webhook Secret",
+    "regex": "(webhook|hook).*secret.*['\\\"]?([A-Za-z0-9_\\-]{32,})['\\\"]?",
+    "severity": "High",
+    "description": "Matches webhook signing secrets (two keywords 'webhook/hook' and 'secret' + value >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "SQL Dump",
+    "regex": "(DROP TABLE IF EXISTS|INSERT INTO `|-- Dump completed on|--\\s*Host:\\s*|--\\s*Database:\\s*)",
+    "severity": "High",
+    "description": "Detects SQL dump files exposed (3+ common SQL keywords/structures).",
+    "accuracy": "High"
+  },
+  {
+    "name": "WordPress SALT Keys",
+    "regex": "define\\(\\s*['\\\"](AUTH_KEY|SECURE_AUTH_KEY|LOGGED_IN_KEY|NONCE_KEY)['\\\"]\\s*,\\s*['\\\"]?([A-Za-z0-9\\-\\/_+]{40,})['\\\"]?\\s*\\)",
+    "severity": "High",
+    "description": "Detects leaked WordPress salt keys (fixed function 'define' + one of the key names + value >= 40 chars). (3 conditions)",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "WP Database Creds",
+    "regex": "define\\(\\s*['\\\"]DB_(NAME|USER|PASSWORD|HOST)['\\\"]\\s*,\\s*['\\\"]?([^'\\\"]+)['\\\"]?\\s*\\)",
+    "severity": "High",
+    "description": "Detects WordPress database credentials (fixed function 'define' + one of the key names + non-empty value). (3 conditions)",
+    "accuracy": "High"
+  },
+  {
+    "name": "SSH Private Key",
+    "regex": "-----BEGIN OPENSSH PRIVATE KEY-----",
+    "severity": "Critical",
+    "description": "Matches OpenSSH private keys (fixed structure).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "SSH Password in Script",
+    "regex": "(sshpass\\s+-p\\s*['\\\"]?([A-Za-z0-9!@#\\$%\\^&*()-=_+]{8,})['\\\"]?)",
+    "severity": "High",
+    "description": "Detects hardcoded SSH passwords in scripts (fixed utility 'sshpass' + fixed argument '-p' + strong password >= 8 chars). (3 conditions)",
+    "accuracy": "High"
+  },
+  {
+    "name": "Slack Webhook URL",
+    "regex": "https:\\/\\/hooks\\.slack\\.com\\/services\\/T[0-9A-Z]{8}\\/B[0-9A-Z]{8}\\/[0-9A-Za-z]{24}",
+    "severity": "High",
+    "description": "Detects Slack incoming webhook URLs (fixed structure and length).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "SAML Certificate",
+    "regex": "-----BEGIN CERTIFICATE-----[\\s\\S]*MII[A-Za-z0-9+/=]{100,}[\\s\\S]*-----END CERTIFICATE-----",
+    "severity": "Medium",
+    "description": "Matches long SAML certificates (fixed format + minimum length/structure check for the content).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Private IP:Port",
+    "regex": "(10\\.\\d{1,3}|192\\.168|172\\.(1[6-9]|2\\d|3[0-1]))\\.\\d{1,3}\\.\\d{1,3}:\\d{2,5}",
+    "severity": "Medium",
+    "description": "Matches internal IP addresses immediately followed by a port number.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Generic PHP Variable Dump",
+    "regex": "\\$[a-zA-Z_]\\w+\\s*=\\s*(?:array\\(|stdClass|object)\\s*\\(",
+    "severity": "Medium",
+    "description": "Detects code output that looks like a PHP variable dump (e.g., using `var_dump`, `print_r`).",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Laravel/PHP Composer Vendor Path",
+    "regex": "\\/vendor\\/(?:composer|laravel|symfony|php)\\/[a-z0-9_.-]+\\/src\\/",
+    "severity": "High",
+    "description": "Detects exposure of deep, specific paths within the Composer `vendor` directory, common in Laravel stack traces.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "GoLang Stacktrace Leak",
+    "regex": "panic:\\s|runtime error:\\s|main\\.func|goroutine\\s\\d+\\s\\[",
+    "severity": "Medium",
+    "description": "Matches common GoLang runtime error/panic signatures which can reveal internal structure.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Terraform State File",
+    "regex": "\"format\":\\s*\"CHASING HASHICORP\\/json\\/v\\d+\",\\s*\"lineage\":\\s*\"",
+    "severity": "Critical",
+    "description": "Detects exposed Terraform state files, which contain all infrastructure secrets and data (fixed format structure).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Mailgun Private API Key",
+    "regex": "key-[0-9a-fA-F]{32,}",
+    "severity": "High",
+    "description": "Matches Mailgun private API keys (fixed prefix + value >= 32 hex chars).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "GitLab Runner Token",
+    "regex": "glrt-[A-Za-z0-9]{20,}",
+    "severity": "High",
+    "description": "Matches GitLab Runner tokens (fixed prefix + value >= 20 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Django Debug Page",
+    "regex": "(<title>Page not found at|You’re seeing this error because you have DEBUG = True)",
+    "severity": "Critical",
+    "description": "Matches the exact signature of the Django DEBUG=True 404 page (including the DEBUG hint).",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Django URL Patterns Leak",
+    "regex": "Request URL:.*didn’t match any of these\\.|Using the URLconf defined in.*tried these URL patterns",
+    "severity": "High",
+    "description": "Matches the disclosure of all internal URL patterns, which exposes the application's structure.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Django Internal Admin",
+    "regex": "admin\\/\\s*$",
+    "severity": "Medium",
+    "description": "Detects the presence of the default `/admin/` endpoint, often a target for attackers.",
+    "accuracy": "Medium"
+  },
+  {
+    "name": "Django /API Schema Leak",
+    "regex": "api\\/schema-v[12]\\/|docs\\/openapi\\.json|api\\/schema-v[12]\\/swagger\\/",
+    "severity": "High",
+    "description": "Detects the exposure of internal API schema paths (Swagger/OpenAPI).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Wordpress/Config Files",
+    "regex": "robots\\.txt|wp-config\\.php|\\.env|\\.bak",
+    "severity": "High",
+    "description": "Matches common paths/files that should not be exposed publicly.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Service Account Key (SAK)",
+    "regex": "SAK-[A-Za-z0-9]{32,}",
+    "severity": "High",
+    "description": "Matches generic Service Account Keys (SAK- prefix + >= 32 chars).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Internal Python Path",
+    "regex": "\\/usr\\/local\\/lib\\/python[0-9.]+\\/site-packages\\/",
+    "severity": "Medium",
+    "description": "Matches deep internal paths within Python's environment, indicating file path exposure.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Composer Configuration Leak",
+    "regex": "(\"name\":\\s*\"laravel\\/laravel\"|\\\"require\\\":\\s*\\{[\\s\\S]*\\\"laravel\\/framework|\\\"minimum-stability\\\":\\s*\\\"dev\\\")",
+    "severity": "High",
+    "description": "Matches the key structural components of a leaked composer.json file, revealing dependencies and stability settings.",
+    "accuracy": "Very High"
+  },
+  {
+    "name": "Generic Package.json Leak",
+    "regex": "(\"name\":\\s*\"[a-z0-9_-]+\\/[a-z0-9_-]+\"|\\\"dependencies\\\":\\s*\\{[\\s\\S]*\\\"@types\\/)",
+    "severity": "Medium",
+    "description": "Matches the structural components of a leaked package.json file, indicating a NodeJS project and exposing dependencies.",
+    "accuracy": "High"
+  },
+  {
+    "name": "Explicit Directory Index File",
+    "regex": "(<a href=\\\"[^\\/]+\\.html\\\">[^\\/]+\\.html<\\/a>|<a href=\\\"[^\\/]+\\.php\\\">[^\\/]+\\.php<\\/a>)",
+    "severity": "Medium",
+    "description": "Specifically looks for explicit file links to common index/script files within a directory listing structure (e.g., .php, .html).",
+    "accuracy": "High"
+  },
+  {
+    "name": "Git Repository Files (Git Index)",
+    "regex": "(\\.gitattributes|\\.gitignore|\\/\\.git\\/HEAD|\\/\\.git\\/config)",
+    "severity": "High",
+    "description": "Matches key internal Git files that indicate the exposure of the .git folder or source control info.",
+    "accuracy": "Very High"
+  }
+]
