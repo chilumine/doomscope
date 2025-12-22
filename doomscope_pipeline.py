@@ -38,6 +38,8 @@ PIPELINE = [
     ("API Enumeration", "api_enum", 8002, "/run"),
     ("Public Parameters", "public_parameters", 6666, "/scan"),
     ("Secret Parameters", "secret_parameters", 5004, "/scan"),
+    ("Archived Parameters", "archived_parameters", 9565, "/scan"),
+    ("Sensitive Token Archived", "sensitive_token_archivied", 9555, "/scan"),
     ("Sensitive Paths", "sensitive_path_enum", 5001, "/scan"),
     ("Sensitive Logins", "sensitive_login_enum", 5002, "/scan"),
     ("Page Identifier", "page_identifier", 5009, "/scan"),

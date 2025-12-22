@@ -25,7 +25,7 @@ def fetch_wayback_urls(domain):
         "http://web.archive.org/cdx/search/cdx"
         f"?url=*.{domain}/*&output=text&fl=original&collapse=urlkey"
     )
-    r = requests.get(url, timeout=30)
+    r = requests.get(url)
     return list(set(r.text.splitlines()))
 
 def extract_interesting_params(url):

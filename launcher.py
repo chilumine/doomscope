@@ -34,6 +34,7 @@ SERVICES = {
     "api_enum": {"folder": "api_enum", "file": "api_enum.py", "port": 8002},
     "js_archived": {"folder": "archived_contents", "file": "js_archived.py", "port": 9557},
     "archived_parameters": {"folder": "archived_contents", "file": "archived_parameters.py", "port": 9565},
+    "sensitive_token_archivied": {"folder": "archived_contents", "file": "sensitive_token_archivied.py", "port": 9555},
     "security_scanner": {"folder": "security_scanner", "file": "security_scanner.py", "port": 9998},
 }
 
