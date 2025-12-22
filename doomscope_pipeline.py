@@ -1,27 +1,64 @@
 import requests
 import json
-import os
 import time
 from datetime import datetime
+import os
+import sys
+import signal
 
-# ======================= CLI STYLE =======================
+# ======================= COLORS =======================
+
+class C:
+    R = "\033[38;5;160m"
+    G = "\033[38;5;82m"
+    Y = "\033[38;5;226m"
+    B = "\033[38;5;45m"
+    P = "\033[38;5;141m"
+    W = "\033[38;5;252m"
+    E = "\033[0m"
+
+def info(msg):  print(f"{C.B}{msg}{C.E}")
+def good(msg):  print(f"{C.G}{msg}{C.E}")
+def warn(msg):  print(f"{C.Y}{msg}{C.E}")
+def error(msg): print(f"{C.R}{msg}{C.E}")
+
+# ======================= GLOBAL FLAG =======================
+
+STOP_REQUESTED = False
+
+def handle_interrupt(sig, frame):
+    global STOP_REQUESTED
+    print(f"\n{C.Y}Execution paused.{C.E}")
+    choice = input(f"{C.W}Do you want to stop DoomScope? (y/N): {C.E}").strip().lower()
+    if choice == "y":
+        STOP_REQUESTED = True
+        print(f"{C.R}Stopping pipeline safely...{C.E}")
+    else:
+        print(f"{C.G}Resuming execution...{C.E}")
+
+signal.signal(signal.SIGINT, handle_interrupt)
+
+# ======================= BANNER =======================
 
 def banner():
-    print("""
-██████╗  ██████╗  ██████╗ ███╗   ███╗███████╗ ██████╗ ██████╗ ███████╗
-██╔══██╗██╔═══██╗██╔═══██╗████╗ ████║██╔════╝██╔════╝██╔═══██╗██╔════╝
-██║  ██║██║   ██║██║   ██║██╔████╔██║███████╗██║     ██║   ██║█████╗  
-██║  ██║██║   ██║██║   ██║██║╚██╔╝██║╚════██║██║     ██║   ██║██╔══╝  
-██████╔╝╚██████╔╝╚██████╔╝██║ ╚═╝ ██║███████║╚██████╗╚██████╔╝███████╗
-╚═════╝  ╚═════╝  ╚═════╝ ╚═╝     ╚═╝╚══════╝ ╚═════╝ ╚═════╝ ╚══════╝
-           DoomScope | Automated Web Security Testing Framework
-    """)
+    print(f"""{C.P}
 
+                 .-=========-.
+              .-'      .-.-.   '-.
+            .'        .'  | |       '.
+           /        .-'    | |           \\
+          |       .'       | |              |
+          |      |         | |              |
+           \\      '.        \\_/            /
+            '.        '-.                  .'
+              '-.            '-.______.-'
 
-def info(msg):    print(f"[*] {msg}")
-def good(msg):    print(f"[✓] {msg}")
-def warn(msg):    print(f"[!] {msg}")
-def error(msg):   print(f"[✗] {msg}")
+{C.B}      d  o  o  m   s  c  o  p  e{C.E}
+
+{C.W}      automated recon & security framework
+      red team  •  attack surface  •  research
+{C.E}
+""")
 
 # ======================= CONFIG =======================
 
@@ -57,71 +94,77 @@ PIPELINE = [
 # ======================= CORE =======================
 
 def run_tool(display_name, tool_name, port, endpoint, domain):
+    if STOP_REQUESTED:
+        return None
+
     url = f"{BASE_URL}:{port}{endpoint}"
     payload = {"domain": domain}
 
-    info(f"{display_name} → RUNNING")
+    info(f"running {display_name.lower()} ...")
     start = time.time()
 
     try:
-        r = requests.post(url, json=payload, headers=HEADERS)
+        r = requests.post(
+            url,
+            json=payload,
+            headers=HEADERS
+        )
+
         if r.status_code != 200:
-            raise Exception(f"HTTP {r.status_code}")
+            raise Exception(f"http {r.status_code}")
+
+        data = r.json()
+
     except Exception as e:
-        error(f"{display_name} FAILED ({e})")
-        raise SystemExit
+        error(f"{display_name.lower()} failed: {e}")
+        return {
+            "tool": tool_name,
+            "status": "failed",
+            "error": str(e)
+        }
 
     elapsed = round(time.time() - start, 2)
-    good(f"{display_name} DONE in {elapsed}s\n")
-    time.sleep(1)
+    good(f"{display_name.lower()} completed in {elapsed}s")
 
-
-def collect_json():
-    info("Collecting JSON results...")
-    merged = {}
-
-    for root, _, files in os.walk("."):
-        for f in files:
-            if not f.endswith(".json"):
-                continue
-
-            path = os.path.join(root, f)
-            try:
-                with open(path, "r", encoding="utf-8") as file:
-                    data = json.load(file)
-            except Exception:
-                continue
-
-            merged.setdefault(root, []).append({
-                "file": path,
-                "data": data
-            })
-
-    return merged
+    return {
+        "tool": tool_name,
+        "status": "success",
+        "elapsed_seconds": elapsed,
+        "response": data
+    }
 
 # ======================= MAIN =======================
 
 def main():
     banner()
 
-    domain = input("🌐 Enter target domain (example.com): ").strip()
+    domain = input(f"{C.W}target domain > {C.E}").strip()
 
     if not domain:
-        error("No domain provided")
+        error("no domain provided")
         return
 
-    info(f"Target set → {domain}")
-    info("Initial Fingerprinting → SKIPPED\n")
+    info(f"target locked: {domain}")
+    print()
+
+    results = []
 
     for step in PIPELINE:
-        run_tool(*step, domain)
+        if STOP_REQUESTED:
+            break
 
-    results = collect_json()
+        result = run_tool(*step, domain)
+        if result:
+            results.append(result)
 
-    final = {
-        "domain": domain,
+        time.sleep(0.4)
+
+    final_report = {
+        "framework": "doomscope",
+        "version": "1.1.0",
+        "target": domain,
         "generated_at": datetime.utcnow().isoformat() + "Z",
-        "pipeline": [s[0] for s in PIPELINE],
+        "completed": not STOP_REQUESTED,
         "results": results
     }
 
@@ -132,10 +175,14 @@ def main():
     )
 
     with open(out_file, "w", encoding="utf-8") as f:
-        json.dump(final, f, indent=2, ensure_ascii=False)
+        json.dump(final_report, f, indent=2, ensure_ascii=False)
 
-    good("Pipeline Completed Successfully")
-    good(f"Unified JSON saved → {out_file}")
+    if STOP_REQUESTED:
+        warn("execution stopped by user")
+    else:
+        good("pipeline completed successfully")
+
+    good(f"report saved to {out_file}")
 
 # ======================= RUN =======================
 
